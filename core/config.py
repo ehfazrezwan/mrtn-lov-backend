@@ -10,10 +10,17 @@ class Settings(BaseSettings):
     SQLALCHEMY_DATABASE_URI: str
     SQLALCHEMY_POOL_SIZE: int = 5
     SQLALCHEMY_MAX_OVERFLOW: int = 10
-    RATE_LIMIT_DEFAULT: int = 500
-    RATE_LIMIT_WINDOW: int = 60
-    RATE_LIMIT_LIMITER: str = "flask_limiter.Limiter"
-    
+
+    # For rate limiting
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int
+    RATE_LIMIT_MAX_REQUESTS: int
+    RATE_LIMIT_TIME_WINDOW: int
+    RATE_LIMIT_REDIS_KEY_PREFIX: str
+
+    RATE_LIMIT_USE_TIME_FRAME: bool = False
+
     @validator("SQLALCHEMY_DATABASE_URI")
     def check_database_url(cls, v: str) -> str:
         if not v.startswith("postgresql"):
