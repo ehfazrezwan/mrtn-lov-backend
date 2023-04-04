@@ -24,3 +24,5 @@ develop-eggs
 *.pyd
 *.pyw
 *.pyz
+
+commands.txt
