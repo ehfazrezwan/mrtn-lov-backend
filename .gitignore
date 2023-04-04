@@ -1,0 +1,26 @@
+env
+.env.*
+*_credentials.json
+
+# Ignore all compiled python files and whatever else is too much for git
+*.py[cod]
+*.so
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+*.egg-link
+*.installed.cfg
+*.egg-info
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz

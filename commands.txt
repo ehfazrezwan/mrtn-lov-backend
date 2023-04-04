@@ -1,0 +1,5 @@
+Create new migration:
+alembic revision --autogenerate -m "Updated text length"
+
+Update database:
+alembic upgrade head
