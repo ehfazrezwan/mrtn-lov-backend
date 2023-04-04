@@ -1,5 +1,5 @@
 Create new migration:
-alembic revision --autogenerate -m "Updated text length"
+alembic revision --autogenerate -m "Changed ini file"
 
 Update database:
 alembic upgrade head
