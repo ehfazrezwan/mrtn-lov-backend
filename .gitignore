@@ -1,6 +1,5 @@
 env
 .env.*
-*_credentials.json
 
 # Ignore all compiled python files and whatever else is too much for git
 *.py[cod]
