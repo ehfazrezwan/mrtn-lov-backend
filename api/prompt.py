@@ -17,6 +17,7 @@ class PromptInput(BaseModel):
 class PromptOutput(BaseModel):
     message: str
     response: str
+    prompt: str
 
 @router.post("/prompt", response_model=PromptOutput, status_code=status.HTTP_201_CREATED)
 async def create_prompt(prompt_input: PromptInput):
