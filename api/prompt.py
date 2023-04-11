@@ -1,9 +1,10 @@
 import uuid
+import os
 import json
 from fastapi import APIRouter, HTTPException, status
 from services.google_sheets import GoogleSheets
 from services.repository import PromptRepository
-from services.banana_client import generate_image
+from services.banana_client import get_image
 from pydantic import BaseModel
 
 from db.database import SessionLocal
@@ -29,12 +30,13 @@ async def create_prompt(prompt_input: PromptInput):
     try:
         pr.create(data["prompt"])
         # gs.append_row(data)
-        banana_response = generate_image(data["prompt"])
-        image_data = banana_response["modelOutputs"][0]["image_base64"]
+        generated_image = get_image(data["prompt"])
+        image_data = generated_image["image_base64"]
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     finally:
         db.close()
 
-    return {"message": "Prompt created successfully", "response": image_data.encode('utf-8')}
+    return {"message": "Prompt created successfully", "response": image_data.encode('utf-8'), "prompt": data["prompt"]}
+
