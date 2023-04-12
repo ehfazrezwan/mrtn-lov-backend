@@ -18,3 +18,4 @@ pillow
 websockets
 asynctest
 httpx
+pytz

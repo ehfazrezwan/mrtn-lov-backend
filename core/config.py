@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_USE_TIME_FRAME: bool = False
 
     BANANA_API_KEY: str = "3a79eef5-7ec7-40ef-be8f-be757e58f6e0"
-    BANANA_MODEL_KEY: str = "12267ac2-0c96-4921-9c38-1900638af167"
+    BANANA_MODEL_KEY: str = "9edbdd67-2078-4eff-935f-6a0b62c869f3"
 
     @validator("SQLALCHEMY_DATABASE_URI")
     def check_database_url(cls, v: str) -> str:

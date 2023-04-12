@@ -5,6 +5,8 @@ from starlette.websockets import WebSocketState
 from io import BytesIO
 import base64
 import asyncio
+from datetime import datetime
+import pytz
 
 from services.google_sheets import GoogleSheets
 from services.repository import PromptRepository
@@ -13,6 +15,12 @@ from services.banana_client import start_image_generation, check_image_generatio
 from db.database import SessionLocal
 
 router = APIRouter()
+# Set the timezone to Bangladesh Time
+bangladesh_tz = pytz.timezone("Asia/Dhaka")
+# Get the current timestamp in the specified timezone
+current_timestamp = datetime.now(bangladesh_tz)
+# Format the timestamp in "DD/MM/YYYY HH:mm:ss"
+formatted_timestamp = current_timestamp.strftime("%d/%m/%Y %H:%M:%S")
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -27,15 +35,17 @@ async def websocket_endpoint(websocket: WebSocket):
 
     while True:
         try:
-            data = await websocket.receive_text()
-            message = json.loads(data)
+            ws_data = await websocket.receive_text()
+            message = json.loads(ws_data)
             action = message.get("action")
 
             if action == "start":
                 prompt = message["prompt"]
                 gs = GoogleSheets()
                 pr.update_by_uuid(session_uuid, text=prompt)
-                # gs.append_row(data)
+                data["prompt"] = prompt
+                data["timestamp"] = formatted_timestamp
+                gs.append_row(data)
                 call_id = await create_prompt(prompt)
                 if call_id is None:
                     start_response = {"status": "error", "message": "Failed to start image generation"}

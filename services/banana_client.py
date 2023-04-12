@@ -57,7 +57,7 @@ async def check_image_generation(call_id: str):
 
 def _prepare_model_inputs(prompt):
     model_inputs = {
-        'prompt': f'(synthwve style nvinkpunk digital illustration of {prompt}, incorporating neon yellow/blue/purple/pink, blending retro and nightclub vibes, in the style of Yoji Shinkawa, trending on artstation:1.4), neon blue/yellow/purple glow background, concert stage, bright colors, Digital art, glow effects, render, 8k, octane render, cinema 4d, blender',
+        'prompt': f'digital illustration of ({prompt}:1.6) trending on artstation, incorporating neon yellow/blue/purple/pink, blending retro and nightclub vibes',
         'negative': 'green, logo, Glasses, Watermark, bad artist, blur, blurry, text, b&w, 3d, bad art, poorly drawn, disfigured, deformed, extra limbs, ugly hands, extra fingers, canvas frame, cartoon, 3d, disfigured, bad art, deformed, extra limbs, weird colors, blurry, duplicate, morbid, mutilated, out of frame, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly, blurry, bad anatomy, bad proportions, extra limbs, disfigured, out of frame, ugly, extra limbs, bad anatomy, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, mutated hands, fused fingers, too many fingers, long neck, Photoshop, video game, ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, mutation, mutated, extra limbs, extra legs, extra arms, disfigured, deformed, cross-eye, body out of frame, blurry, bad art, bad anatomy, 3d render',
         'num_inference_steps': 50,
         'guidance_scale': 7
