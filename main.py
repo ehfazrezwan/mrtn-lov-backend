@@ -15,7 +15,7 @@ app = FastAPI(
 origins = [
     "https://mrtnlv.wtf",
     "http://localhost:3000",
-    "http://localhost",
+    "http://localhost"
 ]
 app.add_middleware(
     CORSMiddleware,
