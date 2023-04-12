@@ -13,7 +13,7 @@ app = FastAPI(
 
 # CORS
 origins = [
-    "https://mrtnlv.wtf",
+    "https://dev.mrtnlv.wtf",
     "http://localhost:3000",
     "http://localhost"
 ]
