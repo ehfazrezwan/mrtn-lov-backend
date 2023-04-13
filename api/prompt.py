@@ -17,14 +17,14 @@ from db.database import SessionLocal
 router = APIRouter()
 # Set the timezone to Bangladesh Time
 bangladesh_tz = pytz.timezone("Asia/Dhaka")
-# Get the current timestamp in the specified timezone
-current_timestamp = datetime.now(bangladesh_tz)
-# Format the timestamp in "DD/MM/YYYY HH:mm:ss"
-formatted_timestamp = current_timestamp.strftime("%d/%m/%Y %H:%M:%S")
 
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    # Get the current timestamp in the specified timezone
+    current_timestamp = datetime.now(bangladesh_tz)
+    # Format the timestamp in "DD/MM/YYYY HH:mm:ss"
+    formatted_timestamp = current_timestamp.strftime("%d/%m/%Y %H:%M:%S")
     session_uuid = str(uuid.uuid4())
     db = SessionLocal()
     pr = PromptRepository(db)
