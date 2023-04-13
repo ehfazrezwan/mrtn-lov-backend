@@ -8,12 +8,14 @@ from api.prompt import router as prompt_router
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url=None,
+    # docs_url=None,
 )
 
 # CORS
 origins = [
-    "https://mrtnlv.wtf"
+    "https://dev.mrtnlv.wtf",
+    "http://localhost:3000",
+    "http://localhost"
 ]
 app.add_middleware(
     CORSMiddleware,
