@@ -11,7 +11,7 @@ class GoogleSheets:
     def append_row(self, data):
         try:
             sheet = self.gc.open("ML Music Video Prompts").sheet1
-            sheet.append_row([data["uuid"], data["prompt"]])
+            sheet.append_row([data["uuid"], data["prompt"], data["timestamp"]])
         except Exception as e:
             print(f"Failed to append row to Google Sheets. Error: {e}")
         finally:
