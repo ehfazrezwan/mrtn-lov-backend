@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
+import datetime
 
 from core.config import settings
 from api.prompt import router as prompt_router
+from api.config import discord_client
 
 
 app = FastAPI(
@@ -11,12 +14,21 @@ app = FastAPI(
     # docs_url=None,
 )
 
+
+@app.on_event("startup")
+async def startup_event():
+    print("Server started :", datetime.datetime.now())
+    asyncio.create_task(discord_client.run_bot(settings.DISCORD_BOT_TOKEN))
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    print("Server shutdown :", datetime.datetime.now())
+    await discord_client.close()
+
+
 # CORS
-origins = [
-    "https://dev.mrtnlv.wtf",
-    "http://localhost:3000",
-    "http://localhost"
-]
+origins = ["https://dev.mrtnlv.wtf", "http://localhost:3000", "http://localhost"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -28,7 +40,8 @@ app.add_middleware(
 # Routers
 app.include_router(prompt_router, prefix=settings.API_V1_STR)
 
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=settings.PORT, reload=True)
 
+    uvicorn.run("main:app", host="0.0.0.0", port=settings.PORT, reload=True)
