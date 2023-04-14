@@ -54,7 +54,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 pr.update_by_uuid(session_uuid, text=prompt)
                 data["prompt"] = prompt
                 data["timestamp"] = formatted_timestamp
-                # gs.append_row(data)
+                gs.append_row(data)
                 call_id = await create_prompt(prompt)
                 if call_id is None:
                     start_response = {
