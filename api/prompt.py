@@ -1,6 +1,6 @@
 import uuid
 import json
-from fastapi import APIRouter, HTTPException, status, WebSocket
+from fastapi import APIRouter, HTTPException, status, WebSocket, FastAPI
 from starlette.websockets import WebSocketState
 from io import BytesIO
 import base64
@@ -10,7 +10,14 @@ import pytz
 
 from services.google_sheets import GoogleSheets
 from services.repository import PromptRepository
-from services.banana_client import start_image_generation, check_image_generation, paste_overlay
+from services.banana_client import (
+    start_image_generation,
+    check_image_generation,
+    paste_overlay,
+)
+from services.discord_client import DiscordClient
+
+from core.config import settings
 
 from db.database import SessionLocal
 
@@ -18,10 +25,16 @@ router = APIRouter()
 # Set the timezone to Bangladesh Time
 bangladesh_tz = pytz.timezone("Asia/Dhaka")
 
+# Create a Discord client
+discord_client = DiscordClient()
+# Run the bot in the background
+asyncio.create_task(discord_client.start())
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    # Get the current timestamp in the specified timezone
+    count = 0
     current_timestamp = datetime.now(bangladesh_tz)
     # Format the timestamp in "DD/MM/YYYY HH:mm:ss"
     formatted_timestamp = current_timestamp.strftime("%d/%m/%Y %H:%M:%S")
@@ -32,6 +45,7 @@ async def websocket_endpoint(websocket: WebSocket):
         "uuid": session_uuid,
     }
     pr.create(session_uuid)
+    prompt = ""
 
     while True:
         try:
@@ -48,7 +62,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 gs.append_row(data)
                 call_id = await create_prompt(prompt)
                 if call_id is None:
-                    start_response = {"status": "error", "message": "Failed to start image generation"}
+                    start_response = {
+                        "status": "error",
+                        "message": "Failed to start image generation",
+                    }
                     await send_json_if_open(websocket, start_response)
                     await websocket.close()
                     break
@@ -57,12 +74,40 @@ async def websocket_endpoint(websocket: WebSocket):
                 await send_json_if_open(websocket, start_response)
 
             elif action == "check":
+                count = count + 1
+
+                if count > 10:
+                    error_response = {
+                        "status": "error",
+                        "message": "Image generation timed out",
+                    }
+                    await send_json_if_open(websocket, error_response)
+
+                    asyncio.create_task(
+                        discord_client.log_error(
+                            error_response, settings.DISCORD_ERROR_CHANNEL_ID
+                        )
+                    )
+
+                    await websocket.close()
+                    break
+
                 try:
                     call_id = message["callID"]
                     image_base64 = await check_prompt(call_id)
                 except Exception as e:
-                    error_response = {"status": "error", "message": f"Unexpected error: {str(e)}"}
+                    error_response = {
+                        "status": "error",
+                        "message": f"Unexpected error: {str(e)}",
+                    }
                     await send_json_if_open(websocket, error_response)
+
+                    asyncio.create_task(
+                        discord_client.log_error(
+                            error_response, settings.DISCORD_ERROR_CHANNEL_ID
+                        )
+                    )
+
                     await websocket.close()
                     break
 
@@ -75,6 +120,13 @@ async def websocket_endpoint(websocket: WebSocket):
                 pr.update_by_uuid(session_uuid, call_id=call_id)
 
                 check_response = {"status": "completed", "image_base64": image_base64}
+
+                asyncio.create_task(
+                    discord_client.share_image(
+                        image_base64, prompt, settings.DISCORD_IMG_CHANNEL_ID
+                    )
+                )
+
                 await send_json_if_open(websocket, check_response)
                 await websocket.close()
                 break
@@ -85,8 +137,18 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.close()
                 break
         except Exception as e:
-            error_response = {"status": "error", "message": f"Unexpected error: {str(e)}"}
+            error_response = {
+                "status": "error",
+                "message": f"Unexpected error: {str(e)}",
+            }
             await send_json_if_open(websocket, error_response)
+
+            asyncio.create_task(
+                discord_client.log_error(
+                    error_response, settings.DISCORD_ERROR_CHANNEL_ID
+                )
+            )
+
             await websocket.close()
             break
 
@@ -96,13 +158,22 @@ async def create_prompt(prompt):
         call_id = await start_image_generation(prompt)
         return call_id
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        asyncio.create_task(
+            discord_client.log_error(e, settings.DISCORD_ERROR_CHANNEL_ID)
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
 
 async def check_prompt(call_id):
     try:
         ai_image = None
         try:
-            ai_image = await asyncio.wait_for(check_image_generation(call_id), timeout=60)  # Set a timeout of 60 seconds
+            ai_image = await asyncio.wait_for(
+                check_image_generation(call_id), timeout=60
+            )  # Set a timeout of 60 seconds
         except asyncio.TimeoutError:
             print("Image generation timed out.")
             return None
@@ -123,14 +194,20 @@ async def check_prompt(call_id):
 
         buffered = BytesIO()
         ai_image.save(buffered, format="JPEG")
-        image_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+        image_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
         return image_base64
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
 
 async def send_json_if_open(websocket, data):
-    if websocket.application_state != WebSocketState.DISCONNECTED and websocket.client_state != WebSocketState.DISCONNECTED:
+    if (
+        websocket.application_state != WebSocketState.DISCONNECTED
+        and websocket.client_state != WebSocketState.DISCONNECTED
+    ):
         await websocket.send_json(data)
     else:
         print("WebSocket is already closed. Cannot send message.")
