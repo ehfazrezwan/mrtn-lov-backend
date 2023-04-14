@@ -28,7 +28,7 @@ async def shutdown_event():
 
 
 # CORS
-origins = ["https://dev.mrtnlv.wtf", "http://localhost:3000", "http://localhost"]
+origins = ["https://dev.mrtnlv.wtf", "https://mrtnlv.wtf"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
