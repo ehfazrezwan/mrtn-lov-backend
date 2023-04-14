@@ -20,3 +20,5 @@ asynctest
 httpx
 pytz
 discord.py
+uvloop
+aiohttp

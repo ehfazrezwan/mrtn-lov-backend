@@ -15,7 +15,7 @@ from services.banana_client import (
     check_image_generation,
     paste_overlay,
 )
-from services.discord_client import DiscordClient
+from api.config import discord_client
 
 from core.config import settings
 
@@ -24,11 +24,6 @@ from db.database import SessionLocal
 router = APIRouter()
 # Set the timezone to Bangladesh Time
 bangladesh_tz = pytz.timezone("Asia/Dhaka")
-
-# Create a Discord client
-discord_client = DiscordClient()
-# Run the bot in the background
-asyncio.create_task(discord_client.start())
 
 
 @router.websocket("/ws")
@@ -83,12 +78,6 @@ async def websocket_endpoint(websocket: WebSocket):
                     }
                     await send_json_if_open(websocket, error_response)
 
-                    asyncio.create_task(
-                        discord_client.log_error(
-                            error_response, settings.DISCORD_ERROR_CHANNEL_ID
-                        )
-                    )
-
                     await websocket.close()
                     break
 
@@ -101,13 +90,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         "message": f"Unexpected error: {str(e)}",
                     }
                     await send_json_if_open(websocket, error_response)
-
-                    asyncio.create_task(
-                        discord_client.log_error(
-                            error_response, settings.DISCORD_ERROR_CHANNEL_ID
-                        )
-                    )
-
                     await websocket.close()
                     break
 
@@ -121,13 +103,12 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 check_response = {"status": "completed", "image_base64": image_base64}
 
+                await send_json_if_open(websocket, check_response)
                 asyncio.create_task(
-                    discord_client.share_image(
+                    discord_client.send_image(
                         image_base64, prompt, settings.DISCORD_IMG_CHANNEL_ID
                     )
                 )
-
-                await send_json_if_open(websocket, check_response)
                 await websocket.close()
                 break
 
@@ -142,13 +123,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 "message": f"Unexpected error: {str(e)}",
             }
             await send_json_if_open(websocket, error_response)
-
-            asyncio.create_task(
-                discord_client.log_error(
-                    error_response, settings.DISCORD_ERROR_CHANNEL_ID
-                )
-            )
-
             await websocket.close()
             break
 
@@ -158,10 +132,6 @@ async def create_prompt(prompt):
         call_id = await start_image_generation(prompt)
         return call_id
     except Exception as e:
-        asyncio.create_task(
-            discord_client.log_error(e, settings.DISCORD_ERROR_CHANNEL_ID)
-        )
-
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )

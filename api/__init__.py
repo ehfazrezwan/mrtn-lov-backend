@@ -1,15 +1,10 @@
 from fastapi import FastAPI
 
-# from .rate_limit import RateLimiterMiddleware
-from .prompt import router as prompt_router, discord_client
+from core.config import settings
+from .prompt import router as prompt_router
+
 
 app = FastAPI()
-
-
-# app.add_middleware(RateLimiterMiddleware)
-@app.on_event("shutdown")
-async def app_shutdown():
-    await discord_client.close()
 
 
 app.include_router(prompt_router)

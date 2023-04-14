@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     DISCORD_IMG_CHANNEL_ID: int = 1096149128305717248
     DISCORD_ERROR_CHANNEL_ID: int = 1096230892529258578
 
+    DISCORD_TEST_CHANNEL_ID: int = 1096466127233761371
+
     @validator("SQLALCHEMY_DATABASE_URI")
     def check_database_url(cls, v: str) -> str:
         if not v.startswith("postgresql"):

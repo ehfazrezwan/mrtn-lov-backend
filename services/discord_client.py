@@ -1,45 +1,52 @@
-import base64
 import discord
 from discord.ext import commands
+import base64
 from io import BytesIO
 
-from core.config import settings
 
-TOKEN = settings.DISCORD_BOT_TOKEN
-
-
-class DiscordClient:
-    def __init__(self):
-        intents = discord.Intents.default()
-        intents.message_content = True
-        self.client = commands.Bot(command_prefix="!", intents=intents)
+class DiscordClient(discord.Client):
+    def __init__(self, command_prefix="!", intents=None):
+        if intents is None:
+            intents = discord.Intents.default()
+            intents.message_content = True
+        super().__init__(command_prefix=command_prefix, intents=intents)
 
     async def on_ready(self):
-        print("Juniper is ready!")
+        print("Bot is ready")
 
-    async def share_image(
-        self,
-        base64_image_string: str,
-        text_prompt: str,
-        channel_id: int = settings.DISCORD_IMG_CHANNEL_ID,
-    ):
-        channel = self.client.get_channel(channel_id)
-        img_data = base64.b64decode(base64_image_string)
+    async def on_message(self, message):
+        if message.author == self.user:
+            return
 
-        image_file = discord.File(BytesIO(img_data), filename="image.png")
-        await channel.send(f"**Prompt**: {text_prompt}\n\n", file=image_file)
+        if message.content.startswith("!hello"):
+            await message.channel.send("Hello!")
 
-    async def log_error(self, error_message: str, channel_id: int):
-        channel = self.client.get_channel(channel_id)
+    async def send_image(self, img_base64: str, prompt: str, channel_id: int):
+        channel = self.get_channel(channel_id)
 
-        # Format the error message as a code block with Python syntax highlighting
-        formatted_error_message = f"```python\n**Error**: {error_message}\n```"
+        image_data = base64.b64decode(img_base64)
+        image_file = BytesIO(image_data)
+        image_file.name = "image.png"
 
-        await channel.send(formatted_error_message)
+        discord_file = discord.File(image_file, filename="image.png")
 
-    async def start(self):
-        self.client.add_listener(self.on_ready)
-        await self.client.start(TOKEN)
+        await channel.send(f"**Prompt**: {prompt}", file=discord_file)
 
-    async def close(self):
-        await self.client.close()
+    async def send_error(self, error: str, channel_id: int):
+        channel = self.get_channel(channel_id)
+
+        embed = discord.Embed(
+            title="Error",
+            description=f"**Error**: ```python\n{error}```",
+            color=0xFF0000,
+        )
+        embed.add_field(name="Error", value=error, inline=False)
+
+        await channel.send(embed)
+
+    async def run_bot(self, token):
+        try:
+            await self.start(token)
+        except KeyboardInterrupt:
+            await self.logout()
+            await self.close()
