@@ -27,8 +27,10 @@ bangladesh_tz = pytz.timezone("Asia/Dhaka")
 
 # Create a Discord client
 discord_client = DiscordClient()
-# Run the bot in the background
-asyncio.create_task(discord_client.start())
+
+
+async def start_discord_client():
+    await discord_client.start()
 
 
 @router.websocket("/ws")
