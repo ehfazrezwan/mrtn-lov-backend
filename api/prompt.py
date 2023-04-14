@@ -106,7 +106,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await send_json_if_open(websocket, check_response)
                 asyncio.create_task(
                     discord_client.send_image(
-                        image_base64, prompt, settings.DISCORD_TEST_CHANNEL_ID
+                        image_base64, prompt, settings.DISCORD_IMG_CHANNEL_ID
                     )
                 )
                 await websocket.close()
